@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Check if the correct number of arguments are provided
-if [ "$#" -ne 3 ]; then
-  echo "Usage: $0 <runtimeVersion> <xavia-ota-url> <upload-key>"
+if [ "$#" -ne 5 ]; then
+  echo "Usage: $0 <runtimeVersion> <xavia-ota-url> <upload-key> <channel> <rolloutPercentage>"
   exit 1
 fi
 
@@ -14,6 +14,8 @@ commitMessage=$(git log -1 --pretty=%B)
 runtimeVersion=$1
 serverHost=$2
 uploadKey=$3
+channel=$4
+rolloutPercentage=$5
 
 # Generate a timestamp for the output folder
 timestamp=$(date -u +%Y%m%d%H%M%S)
@@ -24,6 +26,8 @@ echo "Output Folder: $outputFolder"
 echo "Runtime Version: $runtimeVersion"
 echo "Commit Hash: $commitHash"
 echo "Commit Message: $commitMessage"
+echo "Channel: $channel"
+echo "Rollout Percentage: $rolloutPercentage"
 
 read -p "Do you want to proceed with these values? (y/n): " confirm
 
@@ -48,7 +52,7 @@ zip -q -r ${timestamp}.zip .
 
 
 # Upload the zip file to the server
-curl -X POST $serverHost/api/upload -F "file=@${timestamp}.zip" -F "runtimeVersion=$runtimeVersion" -F "commitHash=$commitHash" -F "commitMessage=$commitMessage" -F "uploadKey=$uploadKey"
+curl -X POST $serverHost/api/upload -F "file=@${timestamp}.zip" -F "runtimeVersion=$runtimeVersion" -F "commitHash=$commitHash" -F "commitMessage=$commitMessage" -F "uploadKey=$uploadKey" -F "channel=$channel" -F "rolloutPercentage=$rolloutPercentage"
 
 echo ""
 

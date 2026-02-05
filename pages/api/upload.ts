@@ -31,6 +31,8 @@ export default async function uploadHandler(req: NextApiRequest, res: NextApiRes
     const runtimeVersion = fields.runtimeVersion?.[0];
     const commitHash = fields.commitHash?.[0];
     const commitMessage = fields.commitMessage?.[0] || 'No message provided';
+    const channel = fields.channel?.[0] || 'production';
+    const rolloutPercentage = fields.rolloutPercentage?.[0] || 100;
 
     if (!uploadKey || !file || !runtimeVersion || !commitHash) {
       res.status(400).json({ error: 'Missing upload key, file, runtime version or commit hash' });
@@ -63,6 +65,8 @@ export default async function uploadHandler(req: NextApiRequest, res: NextApiRes
       commitHash,
       commitMessage,
       updateId,
+      channel,
+      rolloutPercentage: Number(rolloutPercentage),
     });
 
     res.status(200).json({ success: true, path });

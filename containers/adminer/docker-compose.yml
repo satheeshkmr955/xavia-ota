@@ -1,0 +1,18 @@
+services:
+  adminer-xavia-ota:
+    image: adminer:5.3.0
+    container_name: adminer-xavia-ota
+    restart: unless-stopped
+    networks:
+      - xavia_default
+    ports:
+      - 8080:8080
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '5'
+
+networks:
+  xavia_default:
+    external: true

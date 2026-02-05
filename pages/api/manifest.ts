@@ -27,6 +27,8 @@ export default async function manifestEndpoint(req: NextApiRequest, res: NextApi
     protocolVersion: req.headers['expo-protocol-version'],
     apiVersion: req.headers['expo-api-version'],
     currentUpdateId: req.headers['expo-current-update-id'],
+    channel: req.headers['expo-channel-name'],
+    deviceId: req.headers['eas-client-id'],
   });
 
   const protocolVersionMaybeArray = req.headers['expo-protocol-version'];
@@ -59,12 +61,34 @@ export default async function manifestEndpoint(req: NextApiRequest, res: NextApi
   }
 
   const database = DatabaseFactory.getDatabase();
-  const releaseRecord = await database.getLatestReleaseRecordForRuntimeVersion(runtimeVersion);
 
-  if (releaseRecord) {
-    const updateId = releaseRecord.updateId;
+  const channel = Array.isArray(req.headers['expo-channel-name'])
+    ? req.headers['expo-channel-name'][0]
+    : req.headers['expo-channel-name'] ?? 'production';
 
-    const currentUpdateId = req.headers['expo-current-update-id'];
+  const activeReleaseRecord = await database.getLatestActiveRelease?.(runtimeVersion, channel);
+
+  if (activeReleaseRecord) {
+    const updateId = activeReleaseRecord.updateId;
+    const rolloutPct = activeReleaseRecord.rolloutPercentage ?? 100;
+
+    if (rolloutPct < 100 && channel === 'production') {
+      const deviceId = Array.isArray(req.headers['eas-client-id'])
+        ? req.headers['eas-client-id'][0]
+        : req.headers['eas-client-id'] ?? '';
+      const userBucket = HashHelper.getBucket(deviceId);
+
+      const isUserExcludedFromRollout = !deviceId || userBucket >= rolloutPct;
+      if (isUserExcludedFromRollout) {
+        logger.info('User excluded from rollout bucket', { userBucket, rolloutPct, deviceId });
+        await putNoUpdateAvailableInResponseAsync(req, res, protocolVersion);
+        return;
+      }
+    }
+
+    const currentUpdateId = Array.isArray(req.headers['expo-current-update-id'])
+      ? req.headers['expo-current-update-id'][0]
+      : req.headers['expo-current-update-id'] ?? '';
     if (currentUpdateId === updateId) {
       logger.info('User is already running the latest release. Returning NoUpdateAvailable.', {
         runtimeVersion,
@@ -72,13 +96,15 @@ export default async function manifestEndpoint(req: NextApiRequest, res: NextApi
       await putNoUpdateAvailableInResponseAsync(req, res, protocolVersion);
       return;
     }
+  } else {
+    logger.info('No Active Release Found');
+    await putNoUpdateAvailableInResponseAsync(req, res, protocolVersion);
+    return;
   }
 
   let updateBundlePath: string;
   try {
-    updateBundlePath = await UpdateHelper.getLatestUpdateBundlePathForRuntimeVersionAsync(
-      runtimeVersion
-    );
+    updateBundlePath = activeReleaseRecord?.path.replace('.zip', '') || '';
   } catch (error: any) {
     if (error instanceof NoUpdateAvailableError) {
       logger.info('No update available for runtime version', { runtimeVersion });

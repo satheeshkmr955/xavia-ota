@@ -6,6 +6,9 @@ export interface Release {
   commitHash: string;
   commitMessage: string;
   updateId?: string;
+  channel?: string;
+  rolloutPercentage?: number;
+  isHalted?: boolean;
 }
 
 export interface Tracking {
@@ -29,4 +32,8 @@ export interface DatabaseInterface {
   getReleaseTrackingMetrics(releaseId: string): Promise<TrackingMetrics[]>;
   getReleaseTrackingMetricsForAllReleases(): Promise<TrackingMetrics[]>;
   getLatestReleaseRecordForRuntimeVersion(runtimeVersion: string): Promise<Release | null>;
+  getLatestActiveRelease?(runtimeVersion: string, channel: string): Promise<Release | null>;
+  updateReleaseStatus?(id: string, isHalted: boolean): Promise<void>;
+  updateRolloutPercentage?(id: string, rolloutPercentage: number): Promise<void>;
+  getReleaseByUpdateId?(updateId: string): Promise<Release | null>;
 }

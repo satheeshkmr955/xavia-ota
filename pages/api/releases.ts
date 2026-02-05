@@ -2,6 +2,9 @@ import { NextApiRequest, NextApiResponse } from 'next';
 
 import { DatabaseFactory } from '../../apiUtils/database/DatabaseFactory';
 import { StorageFactory } from '../../apiUtils/storage/StorageFactory';
+import { getLogger } from '../../apiUtils/logger';
+
+const logger = getLogger('Release');
 
 export default async function releasesHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -31,13 +34,17 @@ export default async function releasesHandler(req: NextApiRequest, res: NextApiR
           size: file.metadata.size,
           commitHash,
           commitMessage: release?.commitMessage,
+          id: release?.id || '',
+          isHalted: release?.isHalted || false,
+          channel: release?.channel,
+          rolloutPercentage: release?.rolloutPercentage,
         });
       }
     }
 
     res.status(200).json({ releases });
   } catch (error) {
-    console.error('Failed to fetch releases:', error);
+    logger.error('Failed to fetch releases:', error);
     res.status(500).json({ error: 'Failed to fetch releases' });
   }
 }

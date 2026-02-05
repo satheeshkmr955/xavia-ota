@@ -87,6 +87,8 @@ describe('Upload API', () => {
       path: 'updates/1.0.0/timestamp.zip',
       runtimeVersion: '1.0.0',
       timestamp: expect.any(String),
+      channel: expect.any(String),
+      rolloutPercentage: expect.any(Number),
       commitHash: 'abc123',
       commitMessage: 'Test commit message',
       updateId: mockUpdateId,

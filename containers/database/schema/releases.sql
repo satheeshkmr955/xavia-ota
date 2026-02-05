@@ -5,5 +5,8 @@ CREATE TABLE IF NOT EXISTS releases (
   timestamp TIMESTAMP NOT NULL,
   commit_hash VARCHAR(255) NOT NULL,
   commit_message VARCHAR(255) NOT NULL,
-  update_id VARCHAR(255)
+  update_id VARCHAR(255),
+  channel VARCHAR(50) DEFAULT 'production',
+  rollout_percentage INTEGER DEFAULT 100,
+  is_halted BOOLEAN DEFAULT false
 );

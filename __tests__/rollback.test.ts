@@ -49,6 +49,8 @@ describe('Rollback API', () => {
         path: 'updates/1.0.0/old.zip',
         runtimeVersion: '1.0.0',
         commitHash: 'abc123',
+        channel: "production",
+        rolloutPercentage: 100,
       },
     });
 
