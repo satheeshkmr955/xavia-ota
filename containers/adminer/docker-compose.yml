@@ -1,12 +1,18 @@
 services:
-  adminer-xavia-ota:
+  xavia-ota-adminer:
     image: adminer:5.3.0
-    container_name: adminer-xavia-ota
+    env_file: ../../.env
+    container_name: xavia-ota-adminer
     restart: unless-stopped
     networks:
       - xavia_default
     ports:
-      - 8080:8080
+      - 8082:8080
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.adminer.rule=Host(`adminer.${DOMAIN}`)'
+      - 'traefik.http.routers.adminer.entrypoints=websecure'
+      - 'traefik.http.services.adminer.loadbalancer.server.port=8080'
     logging:
       driver: 'json-file'
       options:

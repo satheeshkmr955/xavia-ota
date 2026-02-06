@@ -1,0 +1,48 @@
+services:
+  xavia-ota-traefik:
+    image: traefik:v3.6.7
+    container_name: xavia-ota-traefik
+    restart: always
+    env_file: ../../.env
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - '--api.dashboard=true' # Explicitly enable the dashboard
+      - '--ping=true'
+      - '--providers.docker=true'
+      - '--providers.docker.exposedbydefault=false'
+      - '--providers.docker.network=xavia_default'
+      - '--entrypoints.web.address=:80'
+      - '--entrypoints.websecure.address=:443'
+      # HTTP to HTTPS Redirect
+      - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
+      - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
+      # SSL (Let's Encrypt)
+      - '--certificatesresolvers.myresolver.acme.tlschallenge=true'
+      - '--certificatesresolvers.myresolver.acme.email=${SSL_EMAIL}'
+      - '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json'
+      # Enable Traefik API for health check
+      - '--api.insecure=true'
+    ports:
+      - '80:80'
+      - '443:443'
+      - '8080:8080'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
+    networks:
+      - xavia_default
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '5'
+    healthcheck:
+      test: ['CMD', 'traefik', 'healthcheck', '--ping']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+networks:
+  xavia_default:
+    external: true
