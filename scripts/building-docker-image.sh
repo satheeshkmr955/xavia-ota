@@ -20,7 +20,7 @@ fi
 echo "🛠️  Building ${IMAGE_NAME} version ${APP_VERSION}..."
 
 # Build and tag with the version from .env
-docker compose --env-file .env -f containers/nextjs/docker-compose.local.yml build
+docker compose --env-file .env -f containers/nextjs/docker-compose.build.yml build
 
 echo "✅ Build complete. You can now test locally with: docker run ${IMAGE_NAME}:${APP_VERSION}"
 docker images -a ${IMAGE_NAME}

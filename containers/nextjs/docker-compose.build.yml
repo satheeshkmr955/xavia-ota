@@ -19,17 +19,3 @@ services:
       start_period: 60s
     ports:
       - '3001:3001'
-    env_file: ../../.env
-    networks:
-      - xavia_default
-    labels:
-      - 'traefik.enable=true'
-      - 'traefik.http.routers.nextjs.rule=Host(`${DOMAIN}`)'
-      - 'traefik.http.services.nextjs.loadbalancer.server.port=3001'
-      - 'traefik.http.routers.nextjs.entrypoints=websecure'
-      - 'traefik.http.routers.nextjs.tls=true'
-      - 'traefik.http.routers.nextjs.tls.certresolver=myresolver'
-
-networks:
-  xavia_default:
-    external: true
