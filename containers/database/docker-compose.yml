@@ -1,6 +1,6 @@
 services:
   xavia-ota-postgres:
-    image: postgres:14
+    image: postgres:18
     env_file: ../../.env
     container_name: xavia-ota-postgres
     networks:
