@@ -48,3 +48,52 @@ code-signing-keys
 #
 .idea
 letsencrypt
+
+# Ansible
+infra/ansible/roles/geerlingguy.docker/
+
+# Local environment variables file
+infra/ansible/container/.env
+
+
+# Local .terraform and .opentofu directories
+**/.terraform/*
+**/.opentofu/*
+
+# .tfstate files (contain secrets, do not commit)
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Logs
+*debug.log
+
+# Exclude all .tfvars files by default as they likely contain secrets
+*.tfvars
+*.tfvars.json
+
+# But include the example template
+!example.tfvars
+!example.tfvars.json
+
+# Ignore override files (used for local testing)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# Include lock file - important for reproducibility
+!.terraform.lock.hcl
+
+# Ignore binary plan files
+*.tfplan
+
+# Infracost
+.infracost
