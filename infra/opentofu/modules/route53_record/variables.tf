@@ -14,3 +14,8 @@ variable "ttl" {
   type    = number
   default = 300
 }
+
+variable "cloudfront_domain_name" {
+  type    = string
+  default = ""
+}

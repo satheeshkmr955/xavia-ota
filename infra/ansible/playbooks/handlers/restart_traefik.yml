@@ -1,0 +1,8 @@
+- name: Restart Traefik
+  community.docker.docker_compose_v2:
+    project_src: '{{ deploy_root }}/traefik'
+    env_files:
+      - '{{ deploy_root }}/.env'
+    state: restarted
+    wait: true
+  listen: 'restart_traefik_service'

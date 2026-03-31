@@ -1,0 +1,51 @@
+---
+- name: Deploy Xavia OTA Database
+  hosts: Expo_Update
+  become: true
+  vars:
+    deploy_root: '/opt/xavia-ota'
+
+  tasks:
+    - name: Ensure directory structure exists
+      ansible.builtin.file:
+        path: '{{ item }}'
+        state: directory
+        mode: '0755'
+      loop:
+        - '{{ deploy_root }}/database'
+        - '{{ deploy_root }}/database/schema'
+      tags:
+        - setup-directories
+
+    - name: Copy SQL schema files
+      ansible.builtin.copy:
+        src: '../container/database/schema/{{ item }}'
+        dest: '{{ deploy_root }}/database/schema/{{ item }}'
+        mode: '0644'
+      loop:
+        - releases.sql
+        - tracking.sql
+      tags:
+        - copy-schema
+
+    - name: Copy Docker Compose file
+      ansible.builtin.copy:
+        src: '../container/database/docker-compose.yml'
+        dest: '{{ deploy_root }}/database/docker-compose.yml'
+        mode: '0644'
+      tags:
+        - copy-compose
+
+    - name: Run shared setup
+      ansible.builtin.import_tasks: tasks/docker_common.yml
+
+    - name: Start Postgres Container
+      community.docker.docker_compose_v2:
+        project_src: '{{ deploy_root }}/database'
+        env_files:
+          - '{{ deploy_root }}/.env'
+        state: present
+        wait: true
+        pull: always
+      tags:
+        - start-postgresql

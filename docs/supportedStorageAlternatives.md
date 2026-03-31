@@ -34,8 +34,6 @@ GCP_BUCKET_NAME=your-gcs-bucket-name
 BLOB_STORAGE_TYPE=s3
 S3_REGION=auto
 S3_ENDPOINT=your-s3-endpoint
-S3_ACCESS_KEY_ID=your-access-key-id
-S3_SECRET_ACCESS_KEY=your-secret-access-key
 S3_BUCKET_NAME=your-s3-bucket-name
 ```
 - Support all S3 compatible storage (AWS S3, Digital Ocean Spaces, Cloudflare R2, etc.)

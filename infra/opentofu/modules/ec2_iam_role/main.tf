@@ -15,9 +15,19 @@ resource "aws_iam_role" "ota_ecr_role" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "cloudfront_invalidation" {
+  role       = aws_iam_role.ota_ecr_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudFrontFullAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "ecr_attach" {
   role       = aws_iam_role.ota_ecr_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
+}
+
+resource "aws_iam_role_policy_attachment" "s3_full_access_attach" {
+  role       = aws_iam_role.ota_ecr_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 resource "aws_iam_instance_profile" "ota_instance_profile" {

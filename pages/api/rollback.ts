@@ -7,6 +7,7 @@ import { DatabaseFactory } from '../../apiUtils/database/DatabaseFactory';
 import { StorageFactory } from '../../apiUtils/storage/StorageFactory';
 import { HashHelper } from '../../apiUtils/helpers/HashHelper';
 import { getLogger } from '../../apiUtils/logger';
+import { invalidateCDNCache } from '../../apiUtils/helpers/cloudFrontHelper';
 
 const logger = getLogger('Rollback');
 
@@ -68,6 +69,7 @@ export default async function rollbackHandler(req: NextApiRequest, res: NextApiR
       rolloutPercentage: 100,
     });
 
+    await invalidateCDNCache();
     res.status(200).json({ success: true, newPath });
   } catch (error) {
     console.error('Rollback error:', error);

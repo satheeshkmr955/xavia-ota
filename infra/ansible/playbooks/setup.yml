@@ -1,0 +1,7 @@
+- name: Configure Production Expo OTA Server
+  hosts: Expo_Update
+  become: true
+  tasks:
+    - name: Ensure Docker is installed
+      ansible.builtin.include_role:
+        name: geerlingguy.docker

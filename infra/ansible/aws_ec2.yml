@@ -1,0 +1,15 @@
+plugin: amazon.aws.aws_ec2
+profile: expo-update-ansible
+regions:
+  - us-east-1
+filters:
+  instance-state-name: ["running"]
+  "tag:Project": "Expo-Update"
+hostnames:
+  - network-interface.association.public-ip
+compose:
+  ansible_host: network-interface.association.public-ip
+keyed_groups:
+  - key: tags.Project
+    separator: ""
+    prefix: ""

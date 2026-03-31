@@ -2,7 +2,7 @@ services:
   xavia-ota-nextjs:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_NAME}:${APP_VERSION}
     container_name: xavia-ota-nextjs
-    restart: always
+    restart: unless-stopped
     logging:
       driver: 'json-file'
       options:
@@ -16,11 +16,17 @@ services:
       start_period: 60s
     ports:
       - '3001:3001'
-    labels:
-      - "traefik.docker.network=dokploy-network"
+    env_file: ../.env
     networks:
-      - dokploy-network
+      - xavia_default
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.nextjs.rule=Host(`${DOMAIN}`)'
+      - 'traefik.http.services.nextjs.loadbalancer.server.port=3001'
+      - 'traefik.http.routers.nextjs.entrypoints=websecure'
+      - 'traefik.http.routers.nextjs.tls=true'
+      - 'traefik.http.routers.nextjs.tls.certresolver=myresolver'
 
 networks:
-  dokploy-network:
+  xavia_default:
     external: true

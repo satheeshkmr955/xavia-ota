@@ -1,0 +1,12 @@
+---
+# --- Connection Settings ---
+ansible_user: ubuntu
+ansible_ssh_private_key_file: "~/.ssh/id_ed25519_opentofu.pub"
+
+# --- geerlingguy.docker Role Variables ---
+docker_install_compose: true
+docker_compose_package: docker-compose-plugin
+docker_users:
+  - ubuntu
+docker_apt_release_channel: stable
+docker_apt_arch: amd64

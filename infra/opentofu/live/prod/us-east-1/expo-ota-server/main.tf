@@ -31,6 +31,7 @@ module "ota_server" {
   root_volume_size       = 20
   key_name               = module.ssh_key.key_name
   vpc_security_group_ids = [module.ota_sg.security_group_id]
+  iam_instance_profile   = module.ecr_iam.ota_instance_profile_name
 }
 
 # Assign an Elastic IP
@@ -46,10 +47,28 @@ resource "aws_eip_association" "eip_assoc" {
   allocation_id = module.server_eip.allocation_id
 }
 
+# CDN for OTA updates
+module "expo_cdn" {
+  source          = "../../../../modules/cdn"
+  domain_name     = "expo-updates.satheeshkmr955.click"
+  top_domain_name = "satheeshkmr955.click"
+  origin_domain   = module.ota_server.public_dns
+}
+
 # Create Route53 Record
 module "route53_record" {
-  source       = "../../../../modules/route53_record"
-  domain_name  = "satheeshkmr955.click"
-  subdomain    = "expo-updates"
-  record_value = module.server_eip.public_ip
+  source                 = "../../../../modules/route53_record"
+  domain_name            = "satheeshkmr955.click"
+  subdomain              = "expo-updates"
+  cloudfront_domain_name = module.expo_cdn.cloudfront_domain_name
+  record_value           = ""
+}
+
+# Create S3 Bucket for OTA Updates
+module "ota_s3_bucket" {
+  source      = "../../../../modules/s3"
+  bucket_name = "xavia-smartoptions"
+  tags = {
+    Name = "xavia-smartoptions"
+  }
 }

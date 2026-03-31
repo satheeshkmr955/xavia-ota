@@ -29,3 +29,13 @@ variable "root_volume_size" {
   description = "The size of the root volume in GB"
   default     = 8
 }
+variable "iam_instance_profile" {
+  description = "The name of the IAM instance profile to associate with the instance"
+  type        = string
+  default     = null
+}
+variable "metadata_http_put_response_hop_limit" {
+  description = "The desired HTTP PUT response hop limit for instance metadata requests (set to 2 for Docker/Containers)"
+  type        = number
+  default     = 2
+}

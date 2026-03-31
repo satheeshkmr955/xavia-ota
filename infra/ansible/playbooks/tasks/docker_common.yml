@@ -1,0 +1,16 @@
+---
+- name: Copy .env file securely
+  ansible.builtin.copy:
+    src: '../container/.env'
+    dest: '{{ deploy_root }}/.env'
+    mode: '0644'
+    group: 'docker'
+  tags:
+    - copy-env
+
+- name: Ensure external docker network exists
+  community.docker.docker_network:
+    name: xavia_default
+    state: present
+  tags:
+    - setup-network

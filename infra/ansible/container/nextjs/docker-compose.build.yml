@@ -1,8 +1,8 @@
 services:
   xavia-ota-nextjs:
     build:
-      context: ../../
-      dockerfile: containers/nextjs/Dockerfile
+      context: ../../../../
+      dockerfile: infra/ansible/container/nextjs/Dockerfile
     image: ${IMAGE_NAME}:${APP_VERSION}
     container_name: xavia-ota-nextjs
     restart: always

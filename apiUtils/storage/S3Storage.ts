@@ -13,19 +13,14 @@ export class S3Storage implements StorageInterface {
   private bucketName: string;
 
   constructor() {
-    if (!process.env.S3_ACCESS_KEY_ID || !process.env.S3_SECRET_ACCESS_KEY) {
-      throw new Error('S3 credentials not configured');
-    }
+    // We only strictly need the Bucket Name now.
+    // Credentials will be picked up automatically from the EC2 Instance Profile.
     if (!process.env.S3_BUCKET_NAME) {
       throw new Error('S3 bucket name not configured');
     }
     this.client = new S3Client({
       region: process.env.S3_REGION ?? 'auto',
       endpoint: process.env.S3_ENDPOINT,
-      credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID,
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
-      },
     });
     this.bucketName = process.env.S3_BUCKET_NAME;
   }

@@ -1,0 +1,7 @@
+---
+- name: Verify Connectivity to Expo Servers
+  hosts: Expo_Update
+  gather_facts: true
+  tasks:
+    - name: Sending a ping
+      ansible.builtin.ping:

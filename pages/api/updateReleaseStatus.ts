@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { DatabaseFactory } from '../../apiUtils/database/DatabaseFactory';
+import { invalidateCDNCache } from '../../apiUtils/helpers/cloudFrontHelper';
 
 export default async function updateReleaseStatusHandler(
   req: NextApiRequest,
@@ -20,6 +21,7 @@ export default async function updateReleaseStatusHandler(
   try {
     await DatabaseFactory.getDatabase().updateReleaseStatus?.(id, isHalted);
 
+    await invalidateCDNCache();
     res.status(200).json({
       message: 'Release status updated successfully',
     });

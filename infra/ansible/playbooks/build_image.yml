@@ -1,0 +1,47 @@
+---
+- name: Build Next.js Application Image
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    env_file_path: '../container/.env'
+    build_path: '../../../'
+    dockerfile_path: 'infra/ansible/container/nextjs/Dockerfile'
+
+  pre_tasks:
+    - name: Load version and image name from .env
+      ansible.builtin.set_fact:
+        app_version: "{{ lookup('ansible.builtin.ini', 'APP_VERSION type=properties file=' + env_file_path) }}"
+        image_name: "{{ lookup('ansible.builtin.ini', 'IMAGE_NAME type=properties file=' + env_file_path) }}"
+
+    - name: Display Pre-Build Summary
+      ansible.builtin.debug:
+        msg:
+          - '----------------------------------------'
+          - 'PRE-BUILD SUMMARY'
+          - 'Image Name: {{ image_name }}'
+          - 'Version:    {{ app_version }}'
+          - '----------------------------------------'
+
+    - name: Confirmation Prompt
+      ansible.builtin.pause:
+        prompt: 'Do you want to proceed with the build? (press enter to continue, Ctrl+C to cancel)'
+
+  tasks:
+    - name: Build Docker Image using Compose File
+      community.docker.docker_image_build:
+        name: '{{ image_name }}'
+        tag: '{{ app_version }}'
+        path: '{{ build_path }}'
+        dockerfile: '{{ dockerfile_path }}'
+        args:
+          APP_VERSION: '{{ app_version }}'
+      register: build_result
+      tags:
+        - build-image
+
+    - name: Verify Build
+      ansible.builtin.debug:
+        msg: '✅ Build complete. Image: {{ image_name }}:{{ app_version }}'
+      when: build_result.changed

@@ -4,6 +4,14 @@ resource "aws_instance" "this" {
   instance_type = var.instance_type
   subnet_id     = data.aws_subnets.default.ids[0]
 
+  iam_instance_profile = var.iam_instance_profile
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = var.metadata_http_put_response_hop_limit
+  }
+
   associate_public_ip_address = var.associate_public_ip
 
   key_name               = var.key_name

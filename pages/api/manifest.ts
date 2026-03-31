@@ -13,6 +13,7 @@ import { DatabaseFactory } from '../../apiUtils/database/DatabaseFactory';
 import moment from 'moment';
 
 const logger = getLogger('manifest');
+const STATIC_BOUNDARY = 'expo-static-boundary';
 
 export default async function manifestEndpoint(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -29,6 +30,7 @@ export default async function manifestEndpoint(req: NextApiRequest, res: NextApi
     currentUpdateId: req.headers['expo-current-update-id'],
     channel: req.headers['expo-channel-name'],
     deviceId: req.headers['eas-client-id'],
+    userBucket: req.headers['x-rollout-bucket'],
   });
 
   const protocolVersionMaybeArray = req.headers['expo-protocol-version'];
@@ -76,7 +78,12 @@ export default async function manifestEndpoint(req: NextApiRequest, res: NextApi
       const deviceId = Array.isArray(req.headers['eas-client-id'])
         ? req.headers['eas-client-id'][0]
         : req.headers['eas-client-id'] ?? '';
-      const userBucket = HashHelper.getBucket(deviceId);
+      let userBucket = HashHelper.getBucket(deviceId);
+
+      if (req.headers['x-rollout-bucket']) {
+        const rolloutBucketHeader = req.headers['x-rollout-bucket'];
+        userBucket = parseInt(rolloutBucketHeader[0], 10);
+      }
 
       const isUserExcludedFromRollout = !deviceId || userBucket >= rolloutPct;
       if (isUserExcludedFromRollout) {
@@ -246,7 +253,10 @@ async function putUpdateInResponseAsync(
     };
   });
 
-  const form = new FormData();
+  const form = new FormData({ boundary: STATIC_BOUNDARY } as any);
+
+  (form as any)._boundary = STATIC_BOUNDARY;
+
   form.append('manifest', JSON.stringify(manifest), {
     contentType: 'application/json',
     header: {
@@ -261,8 +271,8 @@ async function putUpdateInResponseAsync(
   res.statusCode = 200;
   res.setHeader('expo-protocol-version', protocolVersion);
   res.setHeader('expo-sfv-version', 0);
-  res.setHeader('cache-control', 'private, max-age=0');
-  res.setHeader('content-type', `multipart/mixed; boundary=${form.getBoundary()}`);
+  res.setHeader('cache-control', 'public, max-age=21600'); // Cache for 6 hours
+  res.setHeader('content-type', `multipart/mixed; boundary=${STATIC_BOUNDARY}`);
   res.write(form.getBuffer());
   res.end();
 
@@ -324,7 +334,11 @@ async function putRollBackInResponseAsync(
     signature = serializeDictionary(dictionary);
   }
 
-  const form = new FormData();
+
+  const form = new FormData({ boundary: STATIC_BOUNDARY } as any);
+
+  (form as any)._boundary = STATIC_BOUNDARY;
+
   form.append('directive', JSON.stringify(directive), {
     contentType: 'application/json',
     header: {
@@ -336,8 +350,8 @@ async function putRollBackInResponseAsync(
   res.statusCode = 200;
   res.setHeader('expo-protocol-version', 1);
   res.setHeader('expo-sfv-version', 0);
-  res.setHeader('cache-control', 'private, max-age=0');
-  res.setHeader('content-type', `multipart/mixed; boundary=${form.getBoundary()}`);
+  res.setHeader('cache-control', 'public, max-age=21600'); // Cache for 6 hours
+  res.setHeader('content-type', `multipart/mixed; boundary=${STATIC_BOUNDARY}`);
   res.write(form.getBuffer());
   res.end();
 }
@@ -373,7 +387,10 @@ async function putNoUpdateAvailableInResponseAsync(
     signature = serializeDictionary(dictionary);
   }
 
-  const form = new FormData();
+  const form = new FormData({ boundary: STATIC_BOUNDARY } as any);
+
+  (form as any)._boundary = STATIC_BOUNDARY;
+
   form.append('directive', JSON.stringify(directive), {
     contentType: 'application/json',
     header: {
@@ -385,8 +402,8 @@ async function putNoUpdateAvailableInResponseAsync(
   res.statusCode = 200;
   res.setHeader('expo-protocol-version', 1);
   res.setHeader('expo-sfv-version', 0);
-  res.setHeader('cache-control', 'private, max-age=0');
-  res.setHeader('content-type', `multipart/mixed; boundary=${form.getBoundary()}`);
+  res.setHeader('cache-control', 'public, max-age=21600'); // Cache for 6 hours
+  res.setHeader('content-type', `multipart/mixed; boundary=${STATIC_BOUNDARY}`);
   res.write(form.getBuffer());
   res.end();
 }

@@ -3,7 +3,7 @@ services:
     image: traefik:v3.6.7
     container_name: xavia-ota-traefik
     restart: always
-    env_file: ../../.env
+    env_file: ../.env
     security_opt:
       - no-new-privileges:true
     command:
@@ -15,14 +15,21 @@ services:
       - '--entrypoints.web.address=:80'
       - '--entrypoints.websecure.address=:443'
       # HTTP to HTTPS Redirect
-      - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
-      - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
+      # - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
+      # - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
       # SSL (Let's Encrypt)
       - '--certificatesresolvers.myresolver.acme.tlschallenge=true'
       - '--certificatesresolvers.myresolver.acme.email=${SSL_EMAIL}'
       - '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json'
       # Enable Traefik API for health check
       - '--api.insecure=true'
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.traefik-dash.rule=Host(`${DOMAIN}`) && PathPrefix(`/dashboard`)'
+      - 'traefik.http.routers.traefik-dash.entrypoints=websecure'
+      - 'traefik.http.routers.traefik-dash.tls.certresolver=myresolver'
+      - 'traefik.http.routers.traefik-dash.tls=true'
+      - 'traefik.http.services.traefik-dash.loadbalancer.server.port=8080'
     ports:
       - '80:80'
       - '443:443'

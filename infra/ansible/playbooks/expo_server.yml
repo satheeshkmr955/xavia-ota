@@ -1,0 +1,70 @@
+---
+- name: Deploy Xavia OTA Expo Server
+  hosts: Expo_Update
+  become: true
+  vars:
+    deploy_root: '/opt/xavia-ota'
+    env_file_path: '../container/.env'
+    aws_profile: 'expo-update-ansible'
+
+  handlers:
+    - import_tasks: handlers/restart_traefik.yml
+
+  pre_tasks:
+    - name: Load environment variables
+      ansible.builtin.set_fact:
+        aws_region: "{{ lookup('ansible.builtin.ini', 'AWS_REGION type=properties file=' + env_file_path) }}"
+        aws_account_id: "{{ lookup('ansible.builtin.ini', 'AWS_ACCOUNT_ID type=properties file=' + env_file_path) }}"
+
+    - name: Set Registry Variables
+      ansible.builtin.set_fact:
+        ecr_uri: '{{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com'
+
+  tasks:
+    - name: Ensure Expo Server directory exists
+      ansible.builtin.file:
+        path: '{{ deploy_root }}/nextjs'
+        state: directory
+        mode: '0755'
+
+    - name: Copy Docker Compose file
+      ansible.builtin.copy:
+        src: '../container/nextjs/docker-compose.prod.yml'
+        dest: '{{ deploy_root }}/nextjs/docker-compose.prod.yml'
+        mode: '0644'
+      tags:
+        - copy-compose
+
+    - name: Run shared setup
+      ansible.builtin.import_tasks: tasks/docker_common.yml
+
+    - name: Get ECR login token
+      ansible.builtin.command: >
+        aws ecr get-login-password --region {{ aws_region }} --profile {{ aws_profile }}
+      register: ecr_token
+      delegate_to: localhost
+      become: false
+      no_log: true
+      tags:
+        - ecr-login
+
+    - name: Log into ECR
+      community.docker.docker_login:
+        registry_url: '{{ ecr_uri }}'
+        username: AWS
+        password: '{{ ecr_token.stdout }}'
+        reauthorize: true
+
+    - name: Start Expo Server Container
+      community.docker.docker_compose_v2:
+        project_src: '{{ deploy_root }}/nextjs'
+        env_files:
+          - '{{ deploy_root }}/.env'
+        files:
+          - docker-compose.prod.yml
+        state: present
+        wait: true
+        pull: always
+      tags:
+        - start-expo-server
+      notify: 'restart_traefik_service'

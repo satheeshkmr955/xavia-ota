@@ -1,0 +1,92 @@
+---
+- name: Push Docker Image to AWS ECR
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    env_file_path: '../container/.env'
+    aws_profile: 'expo-update-ansible'
+
+  pre_tasks:
+    - name: Load environment variables
+      ansible.builtin.set_fact:
+        app_version: "{{ lookup('ansible.builtin.ini', 'APP_VERSION type=properties file=' + env_file_path) }}"
+        image_name: "{{ lookup('ansible.builtin.ini', 'IMAGE_NAME type=properties file=' + env_file_path) }}"
+        aws_region: "{{ lookup('ansible.builtin.ini', 'AWS_REGION type=properties file=' + env_file_path) }}"
+        aws_account_id: "{{ lookup('ansible.builtin.ini', 'AWS_ACCOUNT_ID type=properties file=' + env_file_path) }}"
+
+    - name: Get Git Short Hash
+      ansible.builtin.command: git rev-parse --short HEAD
+      register: git_hash_cmd
+      changed_when: false
+
+    - name: Set Registry Variables
+      ansible.builtin.set_fact:
+        git_hash: '{{ git_hash_cmd.stdout }}'
+        ecr_uri: '{{ aws_account_id }}.dkr.ecr.{{ aws_region }}.amazonaws.com'
+
+    - name: Check if local image exists
+      community.docker.docker_image_info:
+        name: '{{ image_name }}:{{ app_version }}'
+      register: image_info
+
+    - name: Fail if image is missing
+      ansible.builtin.fail:
+        msg: 'Local image {{ image_name }}:{{ app_version }} not found. Run build_image.yml first.'
+      when: image_info.images | length == 0
+
+    - name: Display Push Summary
+      ansible.builtin.debug:
+        msg:
+          - '----------------------------------------'
+          - 'READY TO PUSH TO AWS ECR'
+          - 'Image Name: {{ image_name }}'
+          - 'Version:    {{ app_version }}'
+          - 'Git Hash:   {{ git_hash }}'
+          - 'Region:     {{ aws_region }}'
+          - 'Profile:    {{ aws_profile }}'
+          - 'Registry:   {{ ecr_uri }}'
+          - '----------------------------------------'
+
+    - name: Confirmation Prompt
+      ansible.builtin.pause:
+        prompt: 'Do you want to proceed with the push? (Press Enter to continue, Ctrl+C to cancel)'
+
+  tasks:
+    - name: Ensure ECR Repository exists
+      community.aws.ecs_ecr:
+        name: '{{ image_name }}'
+        region: '{{ aws_region }}'
+        profile: '{{ aws_profile }}'
+        state: present
+        scan_on_push: true
+        image_tag_mutability: immutable
+
+    - name: Get ECR login token
+      ansible.builtin.command: >
+        aws ecr get-login-password --region {{ aws_region }} --profile {{ aws_profile }}
+      register: ecr_token
+      no_log: true
+
+    - name: Log into ECR
+      community.docker.docker_login:
+        registry_url: '{{ ecr_uri }}'
+        username: AWS
+        password: '{{ ecr_token.stdout }}'
+        reauthorize: yes
+
+    - name: Tag and Push Images to ECR
+      community.docker.docker_image:
+        name: '{{ image_name }}:{{ app_version }}'
+        repository: '{{ ecr_uri }}/{{ image_name }}'
+        tag: '{{ item }}'
+        push: true
+        source: local
+      loop:
+        - '{{ app_version }}'
+        - '{{ git_hash }}'
+
+    - name: Final Summary
+      ansible.builtin.debug:
+        msg: '🚀 Push complete! Image URI: {{ ecr_uri }}/{{ image_name }}:{{ app_version }}'

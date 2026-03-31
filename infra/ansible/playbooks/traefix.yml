@@ -1,0 +1,40 @@
+---
+- name: Deploy Xavia OTA Traefik
+  hosts: Expo_Update
+  become: true
+  vars:
+    deploy_root: '/opt/xavia-ota'
+
+  handlers:
+    - import_tasks: handlers/restart_traefik.yml
+
+  tasks:
+    - name: Ensure Traefik directory exists
+      ansible.builtin.file:
+        path: '{{ deploy_root }}/traefik'
+        state: directory
+        mode: '0755'
+
+    - name: Copy Docker Compose file
+      ansible.builtin.copy:
+        src: '../container/traefik/docker-compose.yml'
+        dest: '{{ deploy_root }}/traefik/docker-compose.yml'
+        mode: '0644'
+      tags:
+        - copy-compose
+      notify: 'restart_traefik_service'
+
+    - name: Run shared setup
+      ansible.builtin.import_tasks: tasks/docker_common.yml
+
+    - name: Start Traefik Container
+      community.docker.docker_compose_v2:
+        project_src: '{{ deploy_root }}/traefik'
+        env_files:
+          - '{{ deploy_root }}/.env'
+        state: present
+        wait: true
+        pull: always
+      tags:
+        - start-traefik
+      notify: 'restart_traefik_service'
