@@ -49,6 +49,7 @@ export default async function assetsEndpoint(req: NextApiRequest, res: NextApiRe
       'content-type',
       isLaunchAsset ? 'application/javascript' : nullthrows(mime.getType(assetMetadata.ext))
     );
+    res.setHeader('cache-control', 'public, max-age=1, s-maxage=604800'); // 1 week
     res.end(asset);
   } catch (error) {
     console.error(error);

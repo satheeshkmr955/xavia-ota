@@ -23,6 +23,8 @@ export default async function manifestEndpoint(req: NextApiRequest, res: NextApi
   }
 
   logger.info('A client requested a release', {
+    embeddedUpdateId: req.headers['expo-embedded-update-id'],
+    updatesEnvironment: req.headers['expo-updates-environment'],
     runtimeVersion: req.headers['expo-runtime-version'],
     platform: req.headers['expo-platform'],
     protocolVersion: req.headers['expo-protocol-version'],
@@ -271,7 +273,7 @@ async function putUpdateInResponseAsync(
   res.statusCode = 200;
   res.setHeader('expo-protocol-version', protocolVersion);
   res.setHeader('expo-sfv-version', 0);
-  res.setHeader('cache-control', 'public, max-age=21600'); // Cache for 6 hours
+  res.setHeader('cache-control', 'public, max-age=1, s-maxage=21600'); // 6 hours
   res.setHeader('content-type', `multipart/mixed; boundary=${STATIC_BOUNDARY}`);
   res.write(form.getBuffer());
   res.end();
@@ -334,7 +336,6 @@ async function putRollBackInResponseAsync(
     signature = serializeDictionary(dictionary);
   }
 
-
   const form = new FormData({ boundary: STATIC_BOUNDARY } as any);
 
   (form as any)._boundary = STATIC_BOUNDARY;
@@ -350,7 +351,7 @@ async function putRollBackInResponseAsync(
   res.statusCode = 200;
   res.setHeader('expo-protocol-version', 1);
   res.setHeader('expo-sfv-version', 0);
-  res.setHeader('cache-control', 'public, max-age=21600'); // Cache for 6 hours
+  res.setHeader('cache-control', 'public, max-age=1, s-maxage=21600'); // 6 hours
   res.setHeader('content-type', `multipart/mixed; boundary=${STATIC_BOUNDARY}`);
   res.write(form.getBuffer());
   res.end();
@@ -402,7 +403,7 @@ async function putNoUpdateAvailableInResponseAsync(
   res.statusCode = 200;
   res.setHeader('expo-protocol-version', 1);
   res.setHeader('expo-sfv-version', 0);
-  res.setHeader('cache-control', 'public, max-age=21600'); // Cache for 6 hours
+  res.setHeader('cache-control', 'public, max-age=1, s-maxage=21600'); // 6 hours
   res.setHeader('content-type', `multipart/mixed; boundary=${STATIC_BOUNDARY}`);
   res.write(form.getBuffer());
   res.end();

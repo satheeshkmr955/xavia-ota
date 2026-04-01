@@ -88,8 +88,8 @@ resource "aws_cloudfront_origin_request_policy" "forward_host" {
 resource "aws_cloudfront_cache_policy" "expo_custom_policy" {
   name        = "${replace(var.domain_name, ".", "-")}-cache-policy"
   comment     = "Dynamic cache policy for ${var.domain_name}"
-  default_ttl = var.cache_default_ttl
-  max_ttl     = 86400
+  default_ttl = 21600 # 6 hours
+  max_ttl     = 21600 # 6 hours
   min_ttl     = 0
 
   parameters_in_cache_key_and_forwarded_to_origin {
@@ -105,6 +105,35 @@ resource "aws_cloudfront_cache_policy" "expo_custom_policy" {
 
     cookies_config { cookie_behavior = "none" }
     query_strings_config { query_string_behavior = "all" }
+  }
+}
+
+# Custom Assets Cache Policy
+resource "aws_cloudfront_cache_policy" "expo_assets_cache_policy" {
+  name        = "${replace(var.domain_name, ".", "-")}-assets-cache"
+  comment     = "Caches Expo assets based on query params for ${var.domain_name}"
+  default_ttl = 604800 # 1 week
+  max_ttl     = 604800 # 1 week
+  min_ttl     = 0
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_gzip   = true
+    enable_accept_encoding_brotli = true
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "whitelist"
+      query_strings {
+        items = var.assets_query
+      }
+    }
+
+    cookies_config {
+      cookie_behavior = "none"
+    }
   }
 }
 
@@ -124,6 +153,9 @@ resource "aws_cloudfront_distribution" "expo_cdn" {
       https_port             = 443
       origin_protocol_policy = "https-only"
       origin_ssl_protocols   = ["TLSv1.2"]
+
+      origin_read_timeout      = 60
+      origin_keepalive_timeout = 60
     }
   }
 
@@ -141,6 +173,17 @@ resource "aws_cloudfront_distribution" "expo_cdn" {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.rollout_hash.arn
     }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/api/assets"
+    target_origin_id       = local.generated_origin_id
+    viewer_protocol_policy = "redirect-to-https"
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
+
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.forward_host.id
+    cache_policy_id          = aws_cloudfront_cache_policy.expo_assets_cache_policy.id
   }
 
   default_cache_behavior {

@@ -21,12 +21,6 @@ variable "price_class" {
   default     = "PriceClass_All"
 }
 
-variable "cache_default_ttl" {
-  description = "Default amount of time (in seconds) that an object is in a CloudFront cache"
-  type        = number
-  default     = 3600
-}
-
 variable "whitelist_headers" {
   description = "List of headers to include in the cache key"
   type        = list(string)
@@ -37,12 +31,26 @@ variable "whitelist_headers" {
     "expo-protocol-version",
     "expo-platform",
     "expo-channel-name",
-    "expo-current-update-id"
+    "expo-current-update-id",
+    "expo-updates-environment"
   ]
 }
 
 variable "origin_whitelist_headers" {
   description = "Headers to forward to the origin (Traefik) without including them in the cache key"
   type        = list(string)
-  default     = ["Host", "eas-client-id"]
+  default = [
+    "Host",
+    "eas-client-id",
+    "expo-expect-signature",
+    "expo-embedded-update-id",
+    "if-none-match",
+    "expo-json-error"
+  ]
+}
+
+variable "assets_query" {
+  description = "List of Query to include in the cache key"
+  type        = list(string)
+  default     = ["asset", "runtimeVersion", "platform"]
 }
