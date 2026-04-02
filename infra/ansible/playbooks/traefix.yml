@@ -4,6 +4,7 @@
   become: true
   vars:
     deploy_root: '/opt/xavia-ota'
+    traefik_log_dir: '/var/log/traefik'
 
   handlers:
     - import_tasks: handlers/restart_traefik.yml
@@ -38,3 +39,15 @@
       tags:
         - start-traefik
       notify: 'restart_traefik_service'
+
+    - name: Ensure Traefik log directory exists on host
+      ansible.builtin.file:
+        path: '{{ traefik_log_dir }}'
+        state: directory
+        mode: '0755'
+
+    - name: Configure logrotate for Traefik access logs
+      ansible.builtin.template:
+        src: '../container/traefik/traefik-logrotate.conf'
+        dest: /etc/logrotate.d/traefik
+        mode: '0644'

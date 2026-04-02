@@ -8,3 +8,7 @@ data "aws_internet_gateway" "default" {
     values = [data.aws_vpc.default.id]
   }
 }
+
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}

@@ -1,0 +1,19 @@
+[DEFAULT]
+# Whitelist your admin IPs
+ignoreip = 127.0.0.1/8 ::1 {{ admin_whitelist_ips | default('') }}
+bantime  = 48h
+findtime = 24h
+maxretry = 5
+
+[sshd]
+enabled = true
+port    = ssh
+maxretry = 2
+bantime = 24h
+
+[traefik-auth]
+enabled = true
+filter  = traefik-json
+action = docker-action
+logpath = {{ traefik_log_path }}
+backend = auto

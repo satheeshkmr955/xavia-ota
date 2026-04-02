@@ -58,6 +58,7 @@ infra/ansible/container/.env
 
 # Local .terraform and .opentofu directories
 **/.terraform/*
+**/.terragrunt-cache/*
 **/.opentofu/*
 
 # .tfstate files (contain secrets, do not commit)

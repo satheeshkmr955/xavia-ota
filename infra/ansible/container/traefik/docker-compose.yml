@@ -7,25 +7,31 @@ services:
     security_opt:
       - no-new-privileges:true
     command:
-      - '--api.dashboard=true' # Explicitly enable the dashboard
+      # Disable Dashboard & API
+      - '--api.dashboard=false'
+      - '--api.insecure=false'
       - '--ping=true'
+      # Docker Provider
       - '--providers.docker=true'
       - '--providers.docker.exposedbydefault=false'
       - '--providers.docker.network=xavia_default'
+      # Entrypoints
       - '--entrypoints.web.address=:80'
       - '--entrypoints.websecure.address=:443'
       # HTTP to HTTPS Redirect
-      # - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
-      # - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
+      - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
+      - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
       # SSL (Let's Encrypt)
       - '--certificatesresolvers.myresolver.acme.tlschallenge=true'
       - '--certificatesresolvers.myresolver.acme.email=${SSL_EMAIL}'
       - '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json'
-      # Enable Traefik API for health check
-      - '--api.insecure=true'
+      # Access Log Configuration
+      - '--accesslog=true'
+      - '--accesslog.format=json'
+      - '--accesslog.filepath=/var/log/traefik/access.json'
     labels:
-      - 'traefik.enable=true'
-      - 'traefik.http.routers.traefik-dash.rule=Host(`${DOMAIN}`) && PathPrefix(`/dashboard`)'
+      - 'traefik.enable=false'
+      - 'traefik.http.routers.traefik-dash.rule=Host(`${DOMAIN}`)'
       - 'traefik.http.routers.traefik-dash.entrypoints=websecure'
       - 'traefik.http.routers.traefik-dash.tls.certresolver=myresolver'
       - 'traefik.http.routers.traefik-dash.tls=true'
@@ -33,10 +39,10 @@ services:
     ports:
       - '80:80'
       - '443:443'
-      - '8080:8080'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
+      - /var/log/traefik:/var/log/traefik
     networks:
       - xavia_default
     logging:

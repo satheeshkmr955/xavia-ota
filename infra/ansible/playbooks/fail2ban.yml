@@ -1,0 +1,69 @@
+---
+- name: Secure Server with Fail2Ban
+  hosts: Expo_Update
+  become: true
+  vars:
+    traefik_log_path: /var/log/traefik/access.json
+
+  handlers:
+    - import_tasks: handlers/restart_fail2ban.yml
+
+  tasks:
+    - name: Install Fail2Ban
+      ansible.builtin.apt:
+        name:
+          - fail2ban
+          - sqlite3
+          - ipset
+        state: present
+        update_cache: true
+
+    - name: Create Traefik JSON filter
+      ansible.builtin.copy:
+        src: '../container/fail2ban/traefik-json.conf'
+        dest: /etc/fail2ban/filter.d/traefik-json.conf
+        mode: '0644'
+
+    - name: Create Docker action
+      ansible.builtin.copy:
+        src: '../container/fail2ban/docker-action.conf'
+        dest: /etc/fail2ban/action.d/docker-action.conf
+        mode: '0644'
+
+    - name: Configure jail.local
+      ansible.builtin.template:
+        src: '../container/fail2ban/jail.local.j2'
+        dest: /etc/fail2ban/jail.local
+        mode: '0644'
+      notify: restart_fail2ban_service
+
+    - name: Ensure Fail2Ban service is started
+      ansible.builtin.service:
+        name: fail2ban
+        state: started
+        enabled: true
+# ==============================================================================
+# USEFUL OPERATIONAL COMMANDS (Run on the target host)
+# ==============================================================================
+#
+# --- MONITORING ---
+# View all active jails:           sudo fail2ban-client status
+# View Traefik jail stats:         sudo fail2ban-client status traefik-auth
+# View SSH jail stats:             sudo fail2ban-client status sshd
+# Watch live logs:                 sudo tail -f /var/log/fail2ban.log
+#
+# --- IP MANAGEMENT ---
+# Manually ban an IP:              sudo fail2ban-client set traefik-auth banip <IP>
+# Manually unban an IP:            sudo fail2ban-client set traefik-auth unbanip <IP>
+# Unban from all jails:            sudo fail2ban-client unban <IP>
+# Flush all active bans:           sudo fail2ban-client unban --all
+#
+# --- FIREWALL VERIFICATION ---
+# View kernel-level Docker bans:   sudo iptables -n -L f2b-docker
+#
+# --- TROUBLESHOOTING ---
+# Test Regex against log:          sudo fail2ban-regex /var/log/traefik/access.json /etc/fail2ban/filter.d/traefik-json.conf
+# Reload config (no restart):      sudo fail2ban-client reload
+# Check SQLite DB history:         sudo sqlite3 /var/lib/fail2ban/fail2ban.sqlite3 "SELECT * FROM bans;"
+# Check monitored log files:       sudo fail2ban-client get traefik-auth logpath
+# ==============================================================================
