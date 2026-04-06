@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { DatabaseFactory } from '../../apiUtils/database/DatabaseFactory';
-import { invalidateCDNCache } from '../../apiUtils/helpers/cloudFrontHelper';
+import { invalidateCDNCache, syncRolloutToEdge } from '../../apiUtils/helpers/cloudFrontHelper';
 
 export default async function rolloutPercentageHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -16,6 +16,8 @@ export default async function rolloutPercentageHandler(req: NextApiRequest, res:
   }
 
   try {
+    await syncRolloutToEdge({ percentage: rolloutPercentage });
+
     await DatabaseFactory.getDatabase().updateRolloutPercentage?.(id, rolloutPercentage);
 
     await invalidateCDNCache();

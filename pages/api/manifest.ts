@@ -33,6 +33,7 @@ export default async function manifestEndpoint(req: NextApiRequest, res: NextApi
     channel: req.headers['expo-channel-name'],
     deviceId: req.headers['eas-client-id'],
     userBucket: req.headers['x-rollout-bucket'],
+    rolloutDecision: req.headers['x-rollout-decision'],
   });
 
   const protocolVersionMaybeArray = req.headers['expo-protocol-version'];
@@ -80,11 +81,13 @@ export default async function manifestEndpoint(req: NextApiRequest, res: NextApi
       const deviceId = Array.isArray(req.headers['eas-client-id'])
         ? req.headers['eas-client-id'][0]
         : req.headers['eas-client-id'] ?? '';
-      let userBucket = HashHelper.getBucket(deviceId);
+      let userBucket;
 
       if (req.headers['x-rollout-bucket']) {
-        const rolloutBucketHeader = req.headers['x-rollout-bucket'];
-        userBucket = parseInt(rolloutBucketHeader[0], 10);
+        const rolloutBucketHeader = req.headers['x-rollout-bucket'] as string;
+        userBucket = parseInt(rolloutBucketHeader, 10);
+      } else {
+        userBucket = HashHelper.getBucket(deviceId);
       }
 
       const isUserExcludedFromRollout = !deviceId || userBucket >= rolloutPct;

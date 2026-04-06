@@ -12,3 +12,7 @@ data "aws_internet_gateway" "default" {
 data "aws_ec2_managed_prefix_list" "cloudfront" {
   name = "com.amazonaws.global.cloudfront.origin-facing"
 }
+
+data "http" "my_ip" {
+  url = "https://checkip.amazonaws.com"
+}

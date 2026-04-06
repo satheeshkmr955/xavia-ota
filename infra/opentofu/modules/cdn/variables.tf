@@ -25,13 +25,13 @@ variable "whitelist_headers" {
   description = "List of headers to include in the cache key"
   type        = list(string)
   default = [
-    "x-rollout-bucket",
-    "expo-api-version",
+    "x-rollout-decision",
+    "expo-current-update-id",
     "expo-runtime-version",
-    "expo-protocol-version",
     "expo-platform",
     "expo-channel-name",
-    "expo-current-update-id",
+    "expo-api-version",
+    "expo-protocol-version",
     "expo-updates-environment"
   ]
 }
@@ -41,6 +41,7 @@ variable "origin_whitelist_headers" {
   type        = list(string)
   default = [
     "Host",
+    "x-rollout-bucket",
     "eas-client-id",
     "expo-expect-signature",
     "expo-embedded-update-id",
@@ -53,4 +54,9 @@ variable "assets_query" {
   description = "List of Query to include in the cache key"
   type        = list(string)
   default     = ["asset", "runtimeVersion", "platform"]
+}
+
+variable "cloudfront_kvs_key" {
+  description = "Key in CloudFront Key-Value Store that holds the rollout percentage (0-100)"
+  type        = string
 }

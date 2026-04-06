@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { DatabaseFactory } from '../../apiUtils/database/DatabaseFactory';
-import { invalidateCDNCache } from '../../apiUtils/helpers/cloudFrontHelper';
+import { invalidateCDNCache, syncRolloutToEdge } from '../../apiUtils/helpers/cloudFrontHelper';
 
 export default async function updateReleaseStatusHandler(
   req: NextApiRequest,
@@ -19,6 +19,17 @@ export default async function updateReleaseStatusHandler(
   }
 
   try {
+    const release = await DatabaseFactory.getDatabase().getRelease(id);
+
+    if (!release) {
+      res.status(404).json({ error: 'Release not found' });
+      return;
+    }
+
+    const previousPercentage = release.rolloutPercentage || 0;
+
+    await syncRolloutToEdge({ percentage: isHalted ? 0 : previousPercentage });
+
     await DatabaseFactory.getDatabase().updateReleaseStatus?.(id, isHalted);
 
     await invalidateCDNCache();

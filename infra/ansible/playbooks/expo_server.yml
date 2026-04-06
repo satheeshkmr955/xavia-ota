@@ -55,6 +55,16 @@
         password: '{{ ecr_token.stdout }}'
         reauthorize: true
 
+    - name: Pull images defined in Docker Compose
+      community.docker.docker_compose_v2_pull:
+        project_src: '{{ deploy_root }}/nextjs'
+        env_files:
+          - '{{ deploy_root }}/.env'
+        files:
+          - docker-compose.prod.yml
+      tags:
+        - pull-image
+
     - name: Start Expo Server Container
       community.docker.docker_compose_v2:
         project_src: '{{ deploy_root }}/nextjs'

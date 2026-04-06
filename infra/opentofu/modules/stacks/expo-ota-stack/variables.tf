@@ -45,3 +45,7 @@ variable "subdomain" {
 variable "bucket_name" {
   type = string
 }
+
+variable "cloudfront_kvs_key" {
+  type = string
+}

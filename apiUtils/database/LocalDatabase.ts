@@ -124,7 +124,7 @@ export class PostgresDatabase implements DatabaseInterface {
 
   async getRelease(id: string): Promise<Release | null> {
     const query = `
-      SELECT id, runtime_version as "runtimeVersion", path, timestamp, commit_hash as "commitHash"
+      SELECT id, runtime_version as "runtimeVersion", path, timestamp, commit_hash as "commitHash", commit_message as "commitMessage", update_id as "updateId", channel as "channel", rollout_percentage as "rolloutPercentage", is_halted as "isHalted", path as "path"
       FROM ${Tables.RELEASES} WHERE id = $1
     `;
 

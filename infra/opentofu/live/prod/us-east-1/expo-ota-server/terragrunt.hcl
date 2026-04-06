@@ -25,4 +25,7 @@ inputs = {
   
   # Storage
   bucket_name = "xavia-smartoptions"
+
+  # CloudFront CDN
+  cloudfront_kvs_key = "ROLLOUT_PERCENTAGE"
 }

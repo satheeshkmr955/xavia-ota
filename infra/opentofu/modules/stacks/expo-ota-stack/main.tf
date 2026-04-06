@@ -17,8 +17,8 @@ module "ota_sg" {
       from_port   = 22,
       to_port     = 22,
       protocol    = "tcp",
-      cidr_blocks = ["0.0.0.0/0"],
-      description = "SSH"
+      cidr_blocks = ["${chomp(data.http.my_ip.response_body)}/32"],
+      description = "SSH from my current IP"
     },
     {
       from_port       = 80,
@@ -67,10 +67,11 @@ resource "aws_eip_association" "eip_assoc" {
 
 # CDN for OTA updates
 module "expo_cdn" {
-  source          = "../../cdn"
-  domain_name     = var.domain_name
-  top_domain_name = var.top_domain_name
-  origin_domain   = module.ota_server.public_dns
+  source             = "../../cdn"
+  domain_name        = var.domain_name
+  top_domain_name    = var.top_domain_name
+  origin_domain      = module.ota_server.public_dns
+  cloudfront_kvs_key = var.cloudfront_kvs_key
 }
 
 # Create Route53 Record

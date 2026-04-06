@@ -1,3 +1,9 @@
+# Generate a secure random string for the secret
+resource "random_password" "origin_secret" {
+  length  = 32
+  special = false
+}
+
 # ACM Certificate (Must be in us-east-1 for CloudFront)
 resource "aws_acm_certificate" "cert" {
   domain_name       = var.domain_name
@@ -32,30 +38,53 @@ resource "aws_acm_certificate_validation" "cert" {
   validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
 }
 
+# Create the Key Value Store
+resource "aws_cloudfront_key_value_store" "rollout_kv" {
+  name    = "${replace(var.domain_name, ".", "-")}-rollout-kv"
+  comment = "Rollout percentages for ${var.domain_name}"
+}
+
 # CloudFront Function (JavaScript 2.0)
 resource "aws_cloudfront_function" "rollout_hash" {
-  name    = "${replace(var.domain_name, ".", "-")}-rollout-hashing"
-  runtime = "cloudfront-js-2.0"
-  comment = "Calculates x-rollout-bucket based on eas-client-id for ${var.domain_name}"
-  publish = true
-  code    = <<EOF
-function handler(event) {
-    var request = event.request;
-    var headers = request.headers;
+  name                         = "${replace(var.domain_name, ".", "-")}-rollout-hashing"
+  runtime                      = "cloudfront-js-2.0"
+  comment                      = "Calculates x-rollout-bucket based on eas-client-id for ${var.domain_name}"
+  publish                      = true
+  key_value_store_associations = [aws_cloudfront_key_value_store.rollout_kv.arn]
+  code                         = <<EOF
+import cf from 'cloudfront';
 
-    var deviceId = 'anonymous';
+const kvsId = '${aws_cloudfront_key_value_store.rollout_kv.id}';
+const kvsHandle = cf.kvs(kvsId);
+
+async function handler(event) {
+    const request = event.request;
+    const headers = request.headers;
+
+    let deviceId = 'anonymous';
     if (headers['eas-client-id'] && headers['eas-client-id'].value) {
         deviceId = headers['eas-client-id'].value;
     }
 
-    var hash = 0;
-    for (var i = 0; i < deviceId.length; i++) {
+    let hash = 0;
+    for (let i = 0; i < deviceId.length; i++) {
         hash = (hash << 5) - hash + deviceId.charCodeAt(i);
         hash |= 0;
     }
-    var bucket = Math.abs(hash) % 100;
-    var bucketString = bucket.toString();
+    const bucket = Math.abs(hash) % 100;
+    const bucketString = bucket.toString();
 
+    let targetPct = 0;
+    try {
+        const kvsValue = await kvsHandle.get('${var.cloudfront_kvs_key}');
+        targetPct = parseInt(kvsValue) || 0;
+    } catch (err) {
+        targetPct = 0;
+    }
+
+    const decision = (bucket < targetPct) ? 'UPDATE_AVAILABLE' : 'NO_UPDATE';
+
+    request.headers['x-rollout-decision'] = { value: decision };
     request.headers['x-rollout-bucket'] = { value: bucketString };
 
     return request;
@@ -147,6 +176,11 @@ resource "aws_cloudfront_distribution" "expo_cdn" {
   origin {
     domain_name = var.origin_domain
     origin_id   = local.generated_origin_id
+
+    custom_header {
+      name  = "X-Origin-Verify"
+      value = random_password.origin_secret.result
+    }
 
     custom_origin_config {
       http_port              = 80

@@ -7,7 +7,7 @@ import { DatabaseFactory } from '../../apiUtils/database/DatabaseFactory';
 import { StorageFactory } from '../../apiUtils/storage/StorageFactory';
 import { HashHelper } from '../../apiUtils/helpers/HashHelper';
 import { getLogger } from '../../apiUtils/logger';
-import { invalidateCDNCache } from '../../apiUtils/helpers/cloudFrontHelper';
+import { invalidateCDNCache, syncRolloutToEdge } from '../../apiUtils/helpers/cloudFrontHelper';
 
 const logger = getLogger('Rollback');
 
@@ -57,6 +57,8 @@ export default async function rollbackHandler(req: NextApiRequest, res: NextApiR
       // Fallback: Original logic
       await storage.copyFile(path, newPath);
     }
+
+    await syncRolloutToEdge({ percentage: 100 });
 
     await DatabaseFactory.getDatabase().createRelease({
       path: newPath,

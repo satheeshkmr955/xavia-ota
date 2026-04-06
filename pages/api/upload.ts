@@ -9,6 +9,7 @@ import { StorageFactory } from '../../apiUtils/storage/StorageFactory';
 import AdmZip from 'adm-zip';
 import { ZipHelper } from '../../apiUtils/helpers/ZipHelper';
 import { HashHelper } from '../../apiUtils/helpers/HashHelper';
+import { invalidateCDNCache, syncRolloutToEdge } from '../../apiUtils/helpers/cloudFrontHelper';
 
 export const config = {
   api: {
@@ -58,6 +59,8 @@ export default async function uploadHandler(req: NextApiRequest, res: NextApiRes
 
     const path = await storage.uploadFile(`${updatePath}/${timestamp}.zip`, zipContent);
 
+    await syncRolloutToEdge({ percentage: Number(rolloutPercentage) });
+
     await DatabaseFactory.getDatabase().createRelease({
       path,
       runtimeVersion,
@@ -68,6 +71,8 @@ export default async function uploadHandler(req: NextApiRequest, res: NextApiRes
       channel,
       rolloutPercentage: Number(rolloutPercentage),
     });
+
+    await invalidateCDNCache();
 
     res.status(200).json({ success: true, path });
   } catch (error) {
