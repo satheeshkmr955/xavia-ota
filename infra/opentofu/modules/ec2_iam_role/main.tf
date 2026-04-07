@@ -25,6 +25,11 @@ resource "aws_iam_role_policy_attachment" "ecr_attach" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
 }
 
+resource "aws_iam_role_policy_attachment" "ssm_full_access_attach" {
+  role       = aws_iam_role.ota_ecr_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMFullAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "s3_full_access_attach" {
   role       = aws_iam_role.ota_ecr_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
