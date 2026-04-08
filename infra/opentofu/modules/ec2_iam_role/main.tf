@@ -22,7 +22,7 @@ resource "aws_iam_role_policy_attachment" "cloudfront_invalidation" {
 
 resource "aws_iam_role_policy_attachment" "ecr_attach" {
   role       = aws_iam_role.ota_ecr_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
 }
 
 resource "aws_iam_role_policy_attachment" "ssm_full_access_attach" {

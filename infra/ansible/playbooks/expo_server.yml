@@ -5,7 +5,6 @@
   vars:
     deploy_root: '/opt/xavia-ota'
     env_file_path: '../container/.env'
-    aws_profile: 'expo-update-ansible'
 
   handlers:
     - import_tasks: handlers/restart_traefik.yml
@@ -40,9 +39,8 @@
 
     - name: Get ECR login token
       ansible.builtin.command: >
-        aws ecr get-login-password --region {{ aws_region }} --profile {{ aws_profile }}
+        aws ecr get-login-password --region {{ aws_region }}
       register: ecr_token
-      delegate_to: localhost
       become: false
       no_log: true
       tags:

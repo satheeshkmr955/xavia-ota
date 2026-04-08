@@ -1,0 +1,33 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Install python3-pip and python3-venv
+  ansible.builtin.apt:
+    name:
+      - python3-pip
+      - python3-venv
+      - python3-setuptools
+    state: present
+  become: true
+
+- name: Install boto3 and botocore
+  ansible.builtin.pip:
+    name:
+      - boto3
+      - botocore
+    state: present
+    extra_args: --break-system-packages
+  become: true
+
+- name: Verify installation
+  ansible.builtin.command: python3 -c "import boto3; print(boto3.__version__)"
+  register: boto3_check
+  changed_when: false
+
+- name: Show Boto3 Version
+  ansible.builtin.debug:
+    msg: "Boto3 version installed: {{ boto3_check.stdout }}"

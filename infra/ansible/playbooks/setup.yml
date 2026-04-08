@@ -5,3 +5,7 @@
     - name: Ensure Docker is installed
       ansible.builtin.include_role:
         name: geerlingguy.docker
+    - name: Install Boto3 for AWS interactions
+      ansible.builtin.import_tasks: tasks/install_boto.yml
+    - name: Install AWS CLI
+      ansible.builtin.import_tasks: tasks/install_aws_cli.yml

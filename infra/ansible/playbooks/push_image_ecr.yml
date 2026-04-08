@@ -1,12 +1,11 @@
 ---
 - name: Push Docker Image to AWS ECR
   hosts: localhost
-  connection: local
+  become: false
   gather_facts: false
 
   vars:
     env_file_path: '../container/.env'
-    aws_profile: 'expo-update-ansible'
 
   pre_tasks:
     - name: Load environment variables
@@ -45,7 +44,6 @@
           - 'Version:    {{ app_version }}'
           - 'Git Hash:   {{ git_hash }}'
           - 'Region:     {{ aws_region }}'
-          - 'Profile:    {{ aws_profile }}'
           - 'Registry:   {{ ecr_uri }}'
           - '----------------------------------------'
 
@@ -58,16 +56,21 @@
       community.aws.ecs_ecr:
         name: '{{ image_name }}'
         region: '{{ aws_region }}'
-        profile: '{{ aws_profile }}'
         state: present
         scan_on_push: true
         image_tag_mutability: immutable
+      delegate_to: "{{ groups['Expo_Update'][0] }}"
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
 
     - name: Get ECR login token
       ansible.builtin.command: >
-        aws ecr get-login-password --region {{ aws_region }} --profile {{ aws_profile }}
+        aws ecr get-login-password --region {{ aws_region }}
       register: ecr_token
       no_log: true
+      delegate_to: "{{ groups['Expo_Update'][0] }}"
+      vars:
+        ansible_python_interpreter: /usr/bin/python3
 
     - name: Log into ECR
       community.docker.docker_login:

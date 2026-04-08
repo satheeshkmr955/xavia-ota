@@ -3,7 +3,7 @@
 ignoreip = 127.0.0.1/8 ::1 {{ admin_whitelist_ips | default('') }}
 bantime  = 48h
 findtime = 24h
-maxretry = 5
+maxretry = 3
 
 [sshd]
 enabled = true
