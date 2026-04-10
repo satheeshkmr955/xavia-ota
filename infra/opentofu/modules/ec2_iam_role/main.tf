@@ -35,6 +35,11 @@ resource "aws_iam_role_policy_attachment" "s3_full_access_attach" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "route53_attach" {
+  role       = aws_iam_role.ota_ecr_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonRoute53FullAccess"
+}
+
 resource "aws_iam_instance_profile" "ota_instance_profile" {
   name = "xavia-ota-ec2-profile"
   role = aws_iam_role.ota_ecr_role.name

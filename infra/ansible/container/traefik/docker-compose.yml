@@ -22,7 +22,9 @@ services:
       - '--entrypoints.web.http.redirections.entrypoint.to=websecure'
       - '--entrypoints.web.http.redirections.entrypoint.scheme=https'
       # SSL (Let's Encrypt)
-      - '--certificatesresolvers.myresolver.acme.tlschallenge=true'
+      - '--certificatesresolvers.myresolver.acme.dnschallenge=true'
+      - '--certificatesresolvers.myresolver.acme.dnschallenge.provider=route53'
+      # - '--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory'
       - '--certificatesresolvers.myresolver.acme.email=${SSL_EMAIL}'
       - '--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json'
       # Access Log Configuration
@@ -37,7 +39,7 @@ services:
       - 'traefik.http.routers.traefik-dash.tls=true'
       # - 'traefik.http.services.traefik-dash.loadbalancer.server.port=8080'
       - 'traefik.http.middlewares.verify-origin.headers.customrequestheaders.X-Origin-Verify=${CLOUDFRONT_ORIGIN_SECRET}'
-      - 'traefik.http.routers.traefik-dash.middlewares=verify-origin@docker'
+      - 'traefik.http.routers.traefik-dash.middlewares=verify-origin'
     ports:
       - '80:80'
       - '443:443'

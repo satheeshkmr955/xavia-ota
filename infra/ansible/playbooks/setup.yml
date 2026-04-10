@@ -7,5 +7,9 @@
         name: geerlingguy.docker
     - name: Install Boto3 for AWS interactions
       ansible.builtin.import_tasks: tasks/install_boto.yml
+      tags:
+        - install-boto
     - name: Install AWS CLI
       ansible.builtin.import_tasks: tasks/install_aws_cli.yml
+      tags:
+        - install-aws-cli

@@ -7,6 +7,12 @@
 - name: Install AWS CLI v2 if missing
   when: not aws_bin.stat.exists
   block:
+    - name: Ensure unzip is installed
+      ansible.builtin.package:
+        name: unzip
+        state: present
+      become: true
+
     - name: Download the AWS CLI zipped installer
       ansible.builtin.get_url:
         url: 'https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip'
@@ -22,6 +28,7 @@
     - name: Run the install script
       ansible.builtin.command:
         cmd: '/tmp/aws/install'
+      become: true
 
     - name: Clean up the installer files
       ansible.builtin.file:
